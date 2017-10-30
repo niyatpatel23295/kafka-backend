@@ -1,29 +1,37 @@
 var connection =  new require('./kafka/Connection');
 var login = require('./services/login');
 
-var topic_name = 'login_topic';
-var consumer = connection.getConsumer(topic_name);
+
+var consumer_login = connection.getConsumer('login_topic');
 var producer = connection.getProducer();
 
-console.log('server is running');
-consumer.on('message', function (message) {
-    console.log('message received');
-    console.log(JSON.stringify(message.value));
+
+consumer_login.on('message', function (message) {
+    console.log('backend server js consumer_login: on ', JSON.stringify(message));
     var data = JSON.parse(message.value);
     login.handle_login_request(data.data, function(err,res){
-        console.log('after handle'+res);
-        var payloads = [
-            { topic: data.replyTo,
-                messages:JSON.stringify({
-                    correlationId:data.correlationId,
-                    data : res
-                }),
-                partition : 0
-            }
-        ];
-        producer.send(payloads, function(err, data){
-            console.log(data);
-        });
-        return;
+        if(err){
+            console.log(err);
+            producer.send({error: err}, function(err, data){
+               
+            });
+            return;
+        }
+        else{
+            var payloads = [
+                { topic: data.replyTo,
+                    messages:JSON.stringify({
+                        correlationId:data.correlationId,
+                        data : res
+                    }),
+                    partition : 0
+                }
+            ];
+            console.log(payloads)
+            producer.send(payloads, function(err, data){
+                
+            });
+            return;
+        }
     });
 });

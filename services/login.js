@@ -1,19 +1,31 @@
+var mongo = require("./mongo");
+var mongoURL = "mongodb://localhost:27017/demo3";
 
 function handle_login_request(msg, callback){
+        try {
+            mongo.connect(mongoURL, function(){
 
-    var res = {};
-    console.log("In handle request:"+ JSON.stringify(msg));
+                var coll = mongo.collection('creds');
 
-    if(msg.username == "bhavan@b.com" && msg.password =="a"){
-        res.code = "200";
-        res.value = "Success Login";
+                coll.findOne({username: msg.username, password: msg.password}, function(err, user){
+                    if(err){
+                        console.log(err);
+                    }
+                    if (user) {
+                        user.password = undefined;
+                        console.log("user",user)
+                        callback(null, user);
 
-    }
-    else{
-        res.code = "401";
-        res.value = "Failed Login";
-    }
-    callback(null, res);
+                    } else {
+                        console.log('user not found in backend kafka')
+                        callback(null, false);
+                    }
+                });
+            });
+        }
+        catch (e){
+            callback(e,{});
+        }
 }
 
 exports.handle_login_request = handle_login_request;
