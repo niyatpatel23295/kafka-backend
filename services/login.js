@@ -17,7 +17,7 @@ function handle_login_request(msg, callback){
                         callback(null, user);
 
                     } else {
-                        console.log('user not found in backend kafka')
+                        console.log('user not found')
                         callback(null, false);
                     }
                 });
