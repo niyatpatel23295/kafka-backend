@@ -1,27 +1,31 @@
-/*var mongo = require("./mongo");
+var mongo = require("./mongo");
+var fs = require('fs-extra');
+var fs_native = require('fs');
 
-function handle_signup_request(msg, callback){
+function handle_listdir_request(msg, callback){
         try {
-            console.log('Mark 1 - before mondo data insert');
-            mongo.connect('mongodb://localhost:27017/demo3', function(){
-                var collection = mongo.collection('creds')
-                collection.insertOne({
-                    firstname: msg.firstname,
-                    lastname: msg.lastname,
-                    email: msg.email,
-                    username: msg.username,
-                    password: msg.password
-                }).then(function(result){
-                    callback(null, result.ops[0]);
-                }).
-                catch(function(e){
-                    callback({"error": "User already exists... Try login instead!"}, false);
-                });
+
+            var filesList = fs.readdirSync('./files/' + msg.username );
+            
+            var files = [];
+            var folders = [];
+            var result = {};
+
+            filesList.forEach(function(item, index){
+                if(fs_native.statSync('./files/' + msg.username + '/' + item).isFile()){
+                    files.push(item);
+                }
+                else{
+                    folders.push(item);
+                }
             });
+            result.files = files;
+            result.folders = folders;
+            callback(null, result);
         }
         catch (e){
             callback(e,{});
         }
 }
 
-exports.handle_signup_request = handle_signup_request;*/
+exports.handle_listdir_request = handle_listdir_request;

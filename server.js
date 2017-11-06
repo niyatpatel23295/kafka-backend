@@ -2,7 +2,8 @@ var connection =  new require('./kafka/Connection');
 var login = require('./services/login');
 var signup = require('./services/signup');
 var listdir = require('./services/listdir');
-var consumer_login = connection.getConsumer('login_topic');
+var upload_file = require('./services/uploaddir')
+var consumer_login = connection.getConsumer('new_topic_1');
 // var consumer_signup = connection.getConsumer('signup_topic');
 // var consumer_list_dir = connection.getConsumer('list_dir_topic');
 
@@ -67,9 +68,61 @@ consumer_login.on('message', function (message) {
         });
     }
     else if(message.key == 'list_directory_api'){
+        listdir.handle_listdir_request(data.data, function(err, res){
+            try{
+                if(err){
+                    
+                    return;
+                }
+                else{
+                    var payloads = [
+                        { topic: data.replyTo,
+                            messages:JSON.stringify({
+                                correlationId:data.correlationId,
+                                data : res
+                            }),
+                            partition : 0
+                        }
+                    ];
+                    console.log(payloads)
+                    producer.send(payloads, function(err, data){});
+                    return;
+                }
+            }
+            catch (e){
+                
+            }
 
+        });
     }
+    else if(message.key == 'upload_dir_api'){
+        upload_file.handle_upload_request(data.data, function(err, res){
+            try{
+                if(err){
+                    console.log(err);
+                    return err;
+                }
+                else{
+                    var payloads = [
+                        { topic: data.replyTo,
+                            messages:JSON.stringify({
+                                correlationId:data.correlationId,
+                                data : res
+                            }),
+                            partition : 0
+                        }
+                    ];
+                    
+                    producer.send(payloads, function(err, data){});
+                    return;
+                }
+            }
+            catch (e){
+                console.log(e)
+            }
 
+        });
+    }
 });
 
 /*consumer_signup.on('message', function(message){
